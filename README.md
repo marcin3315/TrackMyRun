@@ -1,4 +1,4 @@
-# TruckMyRun
+# TrackMyRun
 
 **TrackMyRun** to aplikacja mobilna napisana w React Native, która umożliwia śledzenie biegu użytkownika z wykorzystaniem GPS. Aplikacja rejestruje czas, trasę, dystans i zapisuje historię biegów lokalnie.
 
