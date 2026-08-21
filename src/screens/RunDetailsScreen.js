@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { View, Button, StyleSheet, Text } from "react-native";
+import { View, StyleSheet, Text } from "react-native";
 import MapView, { Polyline } from "react-native-maps";
 
 export default function RunDetailsScreen({ route }) {
@@ -14,36 +14,40 @@ export default function RunDetailsScreen({ route }) {
         );
     }
 
+    // Support both new format (array of segments) and old flat-array format
+    const segments = Array.isArray(run.route[0]) ? run.route : [run.route];
+    const allCoords = segments.flat();
+
     return (
         <View style={styles.container}>
             <MapView
                 ref={mapRef}
                 style={styles.map}
                 initialRegion={{
-                    latitude: run.route[0].latitude,
-                    longitude: run.route[0].longitude,
+                    latitude: allCoords[0].latitude,
+                    longitude: allCoords[0].longitude,
                     latitudeDelta: 0.02,
                     longitudeDelta: 0.02,
                 }}
                 onLayout={() =>
-                    mapRef.current?.fitToCoordinates(run.route, {
+                    mapRef.current?.fitToCoordinates(allCoords, {
                         edgePadding: { top: 40, right: 40, bottom: 40, left: 40 },
                         animated: false,
                     })
                 }
             >
-                <Polyline
-                    coordinates={run.route}
-                    strokeWidth={5}
-                    strokeColor="blue"
-                />
+                {segments.map((seg, i) =>
+                    seg.length > 1 ? (
+                        <Polyline key={i} coordinates={seg} strokeWidth={5} strokeColor="blue" />
+                    ) : null
+                )}
             </MapView>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, marginTop: 40, marginBottom: 40 },
   map: { flex: 1 },
   controls: {
     position: "absolute",

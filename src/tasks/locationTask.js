@@ -14,11 +14,7 @@ TaskManager.defineTask(LOCATION_TASK_NAME, ({ data, error }) => {
   if (location) {
     const { latitude, longitude } = location.coords;
     const timestamp = location.timestamp;
-
-    const isPaused = store.getState().run.isPaused;
-    if (!isPaused) {
-      store.dispatch(addLocation({ latitude, longitude, timestamp }));
-    }
+    store.dispatch(addLocation({ latitude, longitude, timestamp }));
   }
 });
 

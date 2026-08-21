@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { Text, StyleSheet, TouchableOpacity, ImageBackground } from "react-native";
 import PropTypes from "prop-types";
+import { useFonts, FasterOne_400Regular } from "@expo-google-fonts/faster-one";
 
 export default function HomeScreen({ navigation }) {
+  const [fontsLoaded] = useFonts({ FasterOne_400Regular });
   const handleStartRun = () => {
     navigation.navigate("Run"); // przejście do ekranu biegu
   };
@@ -12,17 +14,17 @@ export default function HomeScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Track your run</Text>
+    <ImageBackground source={require("../../assets/logo.jpg")} style={styles.container} resizeMode="stretch">
+      <Text style={styles.title}>Śledź swój bieg</Text>
 
       <TouchableOpacity style={styles.button} onPress={handleStartRun}>
-        <Text style={styles.buttonText}>Start a run</Text>
+        <Text style={styles.buttonText}>Start</Text>
       </TouchableOpacity>
 
       <TouchableOpacity style={styles.button2} onPress={handleViewHistory}>
-        <Text style={styles.buttonText}>See history</Text>
+        <Text style={styles.buttonText}>Historia</Text>
       </TouchableOpacity>
-    </View>
+    </ImageBackground>
   );
 }
 
@@ -33,35 +35,51 @@ HomeScreen.propTypes = {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f6f6f6",
+    backgroundColor: "#fcfcfc",
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
+    marginTop: 40,
+    marginBottom: 40,
   },
   title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    marginBottom: 48,
+    fontSize: 40,
+    fontFamily: "FasterOne_400Regular",
+    marginBottom: 500,
     color: "#222",
   },
   button: {
-    backgroundColor: "#36bf21",
+    backgroundColor: "#ffffff",
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
     marginBottom: 16,
-    width: "80%",
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    borderWidth: 2.5,
+    borderColor: "#000",
   },
   button2: {
-    backgroundColor: "#1259c4",
+    backgroundColor: "#ffffff",
     paddingVertical: 14,
     paddingHorizontal: 32,
     borderRadius: 12,
-    width: "80%",
+    marginBottom: 16,
+    elevation: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    borderWidth: 2.5,
+    borderColor: "#000",
   },
   buttonText: {
-    color: "white",
-    fontSize: 18,
+    color: "black",
+    fontSize: 30,
     textAlign: "center",
+    fontFamily: "FasterOne_400Regular",
   },
 });

@@ -22,7 +22,7 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Home">
+      <Stack.Navigator initialRouteName="Home" screenOptions={{ headerShown: false }}>
         <Stack.Screen
           name="RunDetails"
           component={RunDetailsScreen}
@@ -34,12 +34,10 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Run"
           component={RunScreen}
-          options={{ title: "Run" }}
         />
         <Stack.Screen
           name="History"
           component={HistoryScreen}
-          options={{ title: "Run history" }}
         />
       </Stack.Navigator>
     </NavigationContainer>

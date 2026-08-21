@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useFonts, FasterOne_400Regular } from "@expo-google-fonts/faster-one";
 import {
   View,
   Text,
@@ -6,25 +7,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  ImageBackground,
 } from "react-native";
+import Slider from "@react-native-community/slider";
 import { useSelector } from "react-redux";
 
-
-const DISTANCE_FILTERS = [
-  { label: "Any", value: 0 },
-  { label: "1 km+", value: 1 },
-  { label: "5 km+", value: 5 },
-  { label: "10 km+", value: 10 },
-];
-
-const DURATION_FILTERS = [
-  { label: "Any", value: 0 },
-  { label: "15 min+", value: 15 },
-  { label: "30 min+", value: 30 },
-  { label: "1 h+", value: 60 },
-];
-
 export default function HistoryScreen({ navigation }) {
+  const [fontsLoaded] = useFonts({ FasterOne_400Regular });
   const { runs, loading, error } = useSelector((state) => state.history);
 
   const [sortBy, setSortBy] = useState("date_desc");
@@ -65,18 +54,30 @@ export default function HistoryScreen({ navigation }) {
       <TouchableOpacity
         style={styles.item}
         onPress={() => navigation.navigate("RunDetails", { run: item })}
+        activeOpacity={0.75}
       >
-        <Text style={styles.date}>{date}</Text>
-        <Text>Distance: {distance} km</Text>
-        <Text>Duration: {duration}</Text>
-        <Text>Average speed: {speed} km/h</Text>
+        <View style={styles.itemAccent} />
+        <View style={styles.itemContent}>
+          <Text style={styles.date}>{date}</Text>
+          <View style={styles.statRow}>
+            <Text style={styles.statIcon}>📍</Text>
+            <Text style={styles.statText}>{distance} km</Text>
+            <Text style={styles.statIcon}>⏱</Text>
+            <Text style={styles.statText}>{duration}</Text>
+          </View>
+          <View style={styles.statRow}>
+            <Text style={styles.statIcon}>⚡</Text>
+            <Text style={styles.statText}>{speed} km/h</Text>
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Run history</Text>
+    <ImageBackground source={require("../../assets/history.jpg")} style={styles.container} resizeMode="stretch">
+      <View style={styles.overlay}>
+      <Text style={styles.title}>Historia biegów</Text>
 
       {loading && <Text style={styles.status}>⏳ Loading data ...</Text>}
       {error && <Text style={[styles.status, { color: "red" }]}>{error}</Text>}
@@ -88,38 +89,28 @@ export default function HistoryScreen({ navigation }) {
         style={styles.sortBar}
         contentContainerStyle={styles.sortBarContent}
       >
-        <TouchableOpacity
-          style={[styles.chip, (sortBy === "date_desc" || sortBy === "date_asc") && styles.chipActive]}
-          onPress={() => setSortBy(sortBy === "date_desc" ? "date_asc" : "date_desc")}
-        >
-          <Text style={[styles.chipText, (sortBy === "date_desc" || sortBy === "date_asc") && styles.chipTextActive]}>
-            Date {sortBy === "date_asc" ? "↑" : "↓"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.chip, (sortBy === "distance_desc" || sortBy === "distance_asc") && styles.chipActive]}
-          onPress={() => setSortBy(sortBy === "distance_desc" ? "distance_asc" : "distance_desc")}
-        >
-          <Text style={[styles.chipText, (sortBy === "distance_desc" || sortBy === "distance_asc") && styles.chipTextActive]}>
-            Distance {sortBy === "distance_asc" ? "↑" : "↓"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.chip, (sortBy === "duration_desc" || sortBy === "duration_asc") && styles.chipActive]}
-          onPress={() => setSortBy(sortBy === "duration_desc" ? "duration_asc" : "duration_desc")}
-        >
-          <Text style={[styles.chipText, (sortBy === "duration_desc" || sortBy === "duration_asc") && styles.chipTextActive]}>
-            Duration {sortBy === "duration_asc" ? "↑" : "↓"}
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.chip, (sortBy === "speed_desc" || sortBy === "speed_asc") && styles.chipActive]}
-          onPress={() => setSortBy(sortBy === "speed_desc" ? "speed_asc" : "speed_desc")}
-        >
-          <Text style={[styles.chipText, (sortBy === "speed_desc" || sortBy === "speed_asc") && styles.chipTextActive]}>
-            Speed {sortBy === "speed_asc" ? "↑" : "↓"}
-          </Text>
-        </TouchableOpacity>
+        {[
+          { label: "Data",     icon: "📅", key: "date" },
+          { label: "Dystans", icon: "📍", key: "distance" },
+          { label: "Czas", icon: "⏱",  key: "duration" },
+          { label: "Szybkość",    icon: "⚡", key: "speed" },
+        ].map(({ label, icon, key }) => {
+          const isActive = sortBy === `${key}_desc` || sortBy === `${key}_asc`;
+          const arrow = sortBy === `${key}_asc` ? "↑" : "↓";
+          return (
+            <TouchableOpacity
+              key={key}
+              activeOpacity={0.7}
+              style={[styles.chip, isActive && styles.chipActive]}
+              onPress={() => setSortBy(sortBy === `${key}_desc` ? `${key}_asc` : `${key}_desc`)}
+            >
+              <Text style={styles.chipIcon}>{icon}</Text>
+              <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
+                {label} {arrow}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </ScrollView>
 
       {/* Filter toggle */}
@@ -128,73 +119,82 @@ export default function HistoryScreen({ navigation }) {
         onPress={() => setShowFilters((v) => !v)}
       >
         <Text style={styles.filterToggleText}>
-          {showFilters ? "Hide filters ▲" : "Show filters ▼"}
+          {showFilters ? "Ukryj filtry ▲" : "Pokaż filtry ▼"}
           {(minDistance > 0 || minDurationMin > 0) ? "  •" : ""}
         </Text>
       </TouchableOpacity>
 
       {showFilters && (
         <View style={styles.filterPanel}>
-          <Text style={styles.filterLabel}>Min distance</Text>
-          <View style={styles.chipRow}>
-            {DISTANCE_FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f.value}
-                style={[styles.chip, minDistance === f.value && styles.chipActive]}
-                onPress={() => setMinDistance(f.value)}
-              >
-                <Text style={[styles.chipText, minDistance === f.value && styles.chipTextActive]}>
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Min dystans</Text>
+            <Text style={styles.filterValue}>{minDistance} km</Text>
           </View>
-
-          <Text style={styles.filterLabel}>Min duration</Text>
-          <View style={styles.chipRow}>
-            {DURATION_FILTERS.map((f) => (
-              <TouchableOpacity
-                key={f.value}
-                style={[styles.chip, minDurationMin === f.value && styles.chipActive]}
-                onPress={() => setMinDurationMin(f.value)}
-              >
-                <Text style={[styles.chipText, minDurationMin === f.value && styles.chipTextActive]}>
-                  {f.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={40}
+            step={1}
+            value={minDistance}
+            onValueChange={setMinDistance}
+            minimumTrackTintColor="#000"
+            maximumTrackTintColor="#ddd"
+            thumbTintColor="#000"
+          />
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Min czas</Text>
+            <Text style={styles.filterValue}>{minDurationMin} min</Text>
           </View>
+          <Slider
+            style={styles.slider}
+            minimumValue={0}
+            maximumValue={120}
+            step={5}
+            value={minDurationMin}
+            onValueChange={setMinDurationMin}
+            minimumTrackTintColor="#000"
+            maximumTrackTintColor="#ddd"
+            thumbTintColor="#000"
+          />
         </View>
       )}
 
       <Text style={styles.count}>
-        {displayedRuns.length} / {runs.length} runs
+        {displayedRuns.length} / {runs.length} biegów
       </Text>
 
       {displayedRuns.length === 0 ? (
         <Text style={styles.empty}>
-          {runs.length === 0 ? "No saved runs." : "No runs match the current filters."}
+          {runs.length === 0 ? "Brak zapisanych biegów." : "Żaden bieg nie spełnia kryteriów."}
         </Text>
       ) : (
         <FlatList
+          style={{ flex: 1 }}
           data={displayedRuns}
           keyExtractor={(item) => item.id.toString()}
           renderItem={renderItem}
         />
       )}
-    </View>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    marginTop: 40,
+    marginBottom: 40,
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(255,255,255, 0.7)",
     padding: 20,
-    backgroundColor: "#fff",
+    paddingBottom: 0,
   },
   title: {
-    fontSize: 22,
-    fontWeight: "bold",
+    fontSize: 32,
+    fontFamily: "FasterOne_400Regular",
     marginBottom: 12,
   },
   status: {
@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
   sortBar: {
     marginBottom: 8,
     minHeight: 60,
+    flexGrow: 0,
   },
   sortBarContent: {
     gap: 8,
@@ -213,21 +214,38 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   filterToggleText: {
-    color: "#007AFF",
-    fontWeight: "600",
+    color: "#000000",
     fontSize: 14,
+    fontWeight: "bold",
   },
   filterPanel: {
-    backgroundColor: "#f8f8f8",
-    borderRadius: 10,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: "#e0e0e0",
+    elevation: 3,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 3,
+  },
+  filterRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 2,
   },
   filterLabel: {
-    fontWeight: "600",
-    marginBottom: 6,
     fontSize: 13,
-    color: "#444",
+    color: "#888",
+    fontWeight: "600",
+  },
+  filterValue: {
+    fontSize: 15,
+    fontWeight: "bold",
+    color: "#111",
   },
   chipRow: {
     flexDirection: "row",
@@ -236,29 +254,38 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    backgroundColor: "#fff",
-    justifyContent: "center",
+    flexDirection: "row",
     alignItems: "center",
-    minWidth: 80,
+    gap: 5,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: "#ddd",
+    backgroundColor: "#fff",
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
   },
   chipActive: {
-    backgroundColor: "#007AFF",
-    borderColor: "#007AFF",
+    backgroundColor: "#000",
+    borderColor: "#000",
+    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  chipIcon: {
+    fontSize: 14,
   },
   chipText: {
     fontSize: 13,
     color: "#333",
-    textAlign: "center",
-    flexShrink: 0,
+    fontWeight: "700",
   },
   chipTextActive: {
     color: "#fff",
-    fontWeight: "600",
   },
   count: {
     fontSize: 12,
@@ -266,17 +293,48 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   item: {
-    backgroundColor: "#f1f1f1",
-    padding: 14,
-    borderRadius: 10,
+    backgroundColor: "#fff",
+    borderRadius: 12,
     marginBottom: 12,
+    flexDirection: "row",
+    overflow: "hidden",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 4,
+  },
+  itemAccent: {
+    width: 6,
+    backgroundColor: "#3aafc4",
+  },
+  itemContent: {
+    flex: 1,
+    padding: 14,
   },
   date: {
     fontWeight: "bold",
-    marginBottom: 4,
+    fontSize: 13,
+    color: "#555",
+    marginBottom: 8,
+  },
+  statRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 4,
+  },
+  statIcon: {
+    fontSize: 14,
+  },
+  statText: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#222",
+    marginRight: 8,
   },
   empty: {
-    marginTop: 40,
+    marginTop: 8,
     fontSize: 16,
     color: "#666",
   },

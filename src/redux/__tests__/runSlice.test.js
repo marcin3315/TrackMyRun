@@ -149,13 +149,13 @@ describe("runSlice", () => {
       state = runReducer(state, addLocation(loc1));
       state = runReducer(state, addLocation(loc2));
       state = runReducer(state, pauseRun());
-      state = runReducer(state, addLocation(loc3)); // paused — should be excluded
+      state = runReducer(state, addLocation(loc3)); // paused
       state = runReducer(state, resumeRun());
       state = runReducer(state, addLocation(loc4));
 
       const distance = selectDistance({ run: state });
 
-      // Expected: distance over active points only [loc1, loc2, loc4]
+      // tylko z aktywnych punktów [loc1, loc2, loc4]
       const expectedDistance = selectDistance({
         run: {
           locations: [

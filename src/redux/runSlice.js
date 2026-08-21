@@ -7,6 +7,7 @@ const initialState = {
   isPaused: false,
   startTime: null,
   locations: [],
+  segments: [],
 };
 
 const runSlice = createSlice({
@@ -18,6 +19,7 @@ const runSlice = createSlice({
       state.isPaused = false;
       state.startTime = Date.now();
       state.locations = [];
+      state.segments = [[]];
     },
     stopRun: (state) => {
       state.isRunning = false;
@@ -28,6 +30,7 @@ const runSlice = createSlice({
 
     resumeRun: (state) => {
       state.isPaused = false;
+      state.segments.push([]);
     },
 
     addLocation: (state, action) => {
@@ -48,13 +51,10 @@ const runSlice = createSlice({
         return; // nie dodaje błędnych danych
       }
 
-      // dodaj punkt tylko jeśli nie zapauzowany
-      state.locations.push({
-        latitude,
-        longitude,
-        timestamp,
-        paused: isPaused,
-      });
+      if (isPaused) return;
+
+      state.locations.push({ latitude, longitude, timestamp });
+      state.segments[state.segments.length - 1].push({ latitude, longitude });
     },
 
     resetRun: () => initialState,
