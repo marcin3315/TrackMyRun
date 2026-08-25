@@ -2,7 +2,7 @@
 //rejestrowanie kolejnych punktów trasy podczas biegu
 
 import React, { useState, useEffect, useRef } from "react";
-import { View, StyleSheet, Text, TextInput, TouchableOpacity, ImageBackground } from "react-native";
+import { View, StyleSheet, Text, TextInput, TouchableOpacity, ImageBackground, Linking } from "react-native";
 import * as Speech from "expo-speech";
 import MapView, { Polyline, Marker } from "react-native-maps";
 import { useSelector, useDispatch } from "react-redux";
@@ -49,7 +49,7 @@ export default function RunScreen({ navigation }) {
     return `${m}:${String(s).padStart(2, "0")}`;
   };
 
-  useLocationTracker(isTracking, isPaused);
+  const { permissionDenied } = useLocationTracker(isTracking, isPaused);
 
   useEffect(() => {
     if (isTracking) {
@@ -82,7 +82,9 @@ export default function RunScreen({ navigation }) {
     const completedKm = Math.floor(distance);
     if (completedKm > 0 && completedKm > lastAnnouncedKm.current) {
       lastAnnouncedKm.current = completedKm;
-      Speech.speak(`You have run ${completedKm} kilometer${completedKm > 1 ? "s" : ""}. Your average speed is ${speed} kilometers per hour.`, { language: "en-US" });
+      Speech.speak(`Pokonałeś ${completedKm} ${completedKm === 1 ? "kilometr" : completedKm < 5 ? "kilometry" : "kilometrów"}
+        Twoja średnia szybkość to ${speed.replace(".", ",")} kilometrów na godzinę.`,
+        { language: "pl-PL" });
     }
   }, [distance, isTracking]);
 
@@ -200,6 +202,18 @@ export default function RunScreen({ navigation }) {
       {isPaused && (
         <View style={styles.pauseOverlay} pointerEvents="none">
           <Text style={styles.pauseOverlayText}>PAUZA</Text>
+        </View>
+      )}
+
+      {permissionDenied && (
+        <View style={styles.permissionBanner}>
+          <Text style={styles.permissionBannerTitle}>Brak dostępu do lokalizacji</Text>
+          <Text style={styles.permissionBannerBody}>
+            Aby śledzić trasę, zezwól aplikacji na dostęp do lokalizacji w ustawieniach urządzenia.
+          </Text>
+          <TouchableOpacity style={styles.permissionBannerButton} onPress={() => Linking.openSettings()}>
+            <Text style={styles.permissionBannerButtonText}>Otwórz ustawienia</Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -413,7 +427,44 @@ const styles = StyleSheet.create({
     color: "black",
     fontSize: 30,
     textAlign: "center",
-    fontFamily: "FasterOne_400Regular"
+    fontFamily: "FasterOne_400Regular",
+  },
+  permissionBanner: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.75)",
+    justifyContent: "center",
+    alignItems: "center",
+    zIndex: 10,
+    padding: 32,
+  },
+  permissionBannerTitle: {
+    fontFamily: "FasterOne_400Regular",
+    fontSize: 26,
+    color: "#ffffff",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  permissionBannerBody: {
+    fontSize: 16,
+    color: "#dddddd",
+    textAlign: "center",
+    lineHeight: 24,
+    marginBottom: 24,
+  },
+  permissionBannerButton: {
+    backgroundColor: "#ffffff",
+    paddingVertical: 12,
+    paddingHorizontal: 28,
+    borderRadius: 10,
+  },
+  permissionBannerButtonText: {
+    fontFamily: "FasterOne_400Regular",
+    fontSize: 18,
+    color: "#000000",
   },
   goalPending: {
     fontSize: 30,

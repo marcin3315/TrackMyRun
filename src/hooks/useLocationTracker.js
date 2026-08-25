@@ -1,17 +1,24 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import * as Location from "expo-location";
 import LOCATION_TASK_NAME from "../tasks/locationTask";
 
 export default function useLocationTracker(isTracking) {
+  const [permissionDenied, setPermissionDenied] = useState(false);
+
   useEffect(() => {
-    if (!isTracking) return;
+    if (!isTracking) {
+      setPermissionDenied(false);
+      return;
+    }
 
     const startTracking = async () => {
       const { status: fgStatus } = await Location.requestForegroundPermissionsAsync();
       if (fgStatus !== "granted") {
-        console.warn("Foreground location permission denied");
+        setPermissionDenied(true);
         return;
       }
+
+      setPermissionDenied(false);
 
       const { status: bgStatus } = await Location.requestBackgroundPermissionsAsync();
       if (bgStatus !== "granted") {
@@ -42,4 +49,6 @@ export default function useLocationTracker(isTracking) {
       Location.stopLocationUpdatesAsync(LOCATION_TASK_NAME).catch(() => {});
     };
   }, [isTracking]);
+
+  return { permissionDenied };
 }

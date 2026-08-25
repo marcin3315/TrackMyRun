@@ -4,19 +4,20 @@ describe("runSlice", () => {
   it("should return initial state", () => {
     const initialState = runReducer(undefined, {});
     expect(initialState).toEqual({
-      isRunning: false,
       isPaused: false,
+      isRunning: false,
       startTime: null,
       locations: [],
+      segments: [],
     });
   });
-
   it("should handle startRun", () => {
     const state = runReducer(undefined, startRun());
     expect(state.isRunning).toBe(true);
     expect(state.isPaused).toBe(false);
-    expect(state.startTime).toBeDefined(); //czy nie jest null ani undefined
+    expect(state.startTime).toBeGreaterThan(0);
     expect(state.locations).toEqual([]); //czy poprzednia trasa została wyczyszczona
+    expect(state.segments).toEqual([[]]);
   });
 
   it("should add valid location", () => {
@@ -27,12 +28,13 @@ describe("runSlice", () => {
     };
 
     const state = runReducer(
-      { isRunning: true, startTime: 1000, locations: [] }, //przykładowy stan
+      { isRunning: true, isPaused: false, startTime: 1000, locations: [], segments: [[]] }, //przykładowy stan
       addLocation(validLocation),
     );
 
     expect(state.locations.length).toBe(1); //czy liczba punktów wynosi 1
     expect(state.locations[0]).toEqual(validLocation);
+    expect(state.segments[0]).toEqual([{ latitude: 52.23, longitude: 21.01 }]);
   });
 
   it("should not add invalid location", () => {
@@ -42,11 +44,12 @@ describe("runSlice", () => {
     };
 
     const state = runReducer(
-      { isRunning: true, startTime: 1000, locations: [] },
+      { isRunning: true, isPaused: false, startTime: 1000, locations: [], segments: [[]] },
       addLocation(invalidLocation),
     );
 
     expect(state.locations.length).toBe(0); // nic nie dodano
+    expect(state.segments[0].length).toBe(0);
   });
 
   it("should reset run state", () => {
@@ -55,6 +58,7 @@ describe("runSlice", () => {
       isPaused: false,
       startTime: 123,
       locations: [{ latitude: 1, longitude: 2, timestamp: 123 }],
+      segments: [[{ latitude:1, longitude: 2}]]
     };
 
     const state = runReducer(runningState, resetRun());
@@ -63,6 +67,7 @@ describe("runSlice", () => {
       isPaused: false,
       startTime: null,
       locations: [],
+      segments: []
     });
   });
 
@@ -72,6 +77,7 @@ describe("runSlice", () => {
       isPaused: false,
       startTime: 123,
       locations: [{ latitude: 1, longitude: 2, timestamp: 123 }],
+      segments: [[{ latitude: 1, longitude: 2}]],
     };
 
     const state = runReducer(runningState, pauseRun());
@@ -80,6 +86,7 @@ describe("runSlice", () => {
     expect(state.isPaused).toBe(true);
     expect(state.startTime).toBe(123);
     expect(state.locations).toEqual(runningState.locations);
+    expect(state.segments).toEqual(runningState.segments);
   });
 
   it("should resume run state", () => {
@@ -88,6 +95,7 @@ describe("runSlice", () => {
       isPaused: true,
       startTime: 123,
       locations: [{ latitude: 1, longitude: 2, timestamp: 123 }],
+      segments: [[{ latitude: 1, longitude: 2}]],
     };
 
     const state = runReducer(runningState, resumeRun());
@@ -96,6 +104,9 @@ describe("runSlice", () => {
     expect(state.isPaused).toBe(false);
     expect(state.startTime).toBe(123);
     expect(state.locations).toEqual(runningState.locations);
+    expect(state.segments).toEqual([[{ latitude: 1, longitude: 2 }],
+      [], // nowy pusty segment dodany przez resumeRun
+    ]);
   });
 
 
@@ -104,64 +115,56 @@ describe("runSlice", () => {
     const loc2 = { latitude: 52.2310, longitude: 21.0100, timestamp: 2000 }; // ~111 m na północ od loc1
     const loc3 = { latitude: 52.2320, longitude: 21.0100, timestamp: 3000 }; // ~111 m na północ od loc2
 
-    it("should mark locations added while running as not paused", () => {
-      let state = { isRunning: true, isPaused: false, startTime: 1000, locations: [] };
+    it("should add location when not paused", () => {
+      let state = { isRunning: true, isPaused: false, startTime: 1000, locations: [], segments: [[]] };
       state = runReducer(state, addLocation(loc1));
-      expect(state.locations[0].paused).toBe(false);
+      expect(state.locations.length).toBe(1);
+      expect(state.locations[0]).toEqual(loc1);
+      expect(state.segments[0]).toEqual([{ latitude: loc1.latitude, longitude: loc1.longitude }]);
     });
 
-    it("should mark locations added during pause as paused", () => {
-      let state = { isRunning: true, isPaused: true, startTime: 1000, locations: [] };
-      state = runReducer(state, addLocation(loc1));
-      expect(state.locations[0].paused).toBe(true);
+    it("should not add location when paused", () => {
+      let state = { isRunning: true, isPaused: true, startTime: 1000, locations: [], segments: [[]] };
+      expect(state.locations.length).toBe(0);
+      expect(state.segments[0].length).toBe(0);
     });
 
     it("should not increase distance when a location is added during pause", () => {
-      const stateBeforePause = {
-        run: {
-          locations: [
-            { ...loc1, paused: false },
-            { ...loc2, paused: false },
-          ],
-        },
-      };
-      const distanceBefore = selectDistance(stateBeforePause);
+      let state = runReducer(undefined, startRun());
+      state = runReducer(state, addLocation(loc1));
+      state = runReducer(state, addLocation(loc2));
 
-      const stateWithPausedPoint = {
-        run: {
-          locations: [
-            { ...loc1, paused: false },
-            { ...loc2, paused: false },
-            { ...loc3, paused: true },
-          ],
-        },
-      };
-      const distanceAfterPause = selectDistance(stateWithPausedPoint);
+      const distanceBefore = selectDistance({ run: state });
+
+      state = runReducer(state, pauseRun());
+      state = runReducer(state, addLocation(loc3)); // powinno być zignorowane
+
+      const distanceAfter = selectDistance({ run: state });
 
       expect(distanceBefore).toBeGreaterThan(0);
-      expect(distanceAfterPause).toBe(distanceBefore);
+      expect(distanceAfter).toBe(distanceBefore);
     });
 
     it("should resume tracking distance correctly after pause", () => {
       const loc4 = { latitude: 52.2305, longitude: 21.0100, timestamp: 4000 };
 
-      let state = { isRunning: true, isPaused: false, startTime: 1000, locations: [] };
+      let state = runReducer(undefined, startRun());
       state = runReducer(state, addLocation(loc1));
       state = runReducer(state, addLocation(loc2));
       state = runReducer(state, pauseRun());
-      state = runReducer(state, addLocation(loc3)); // paused
+      state = runReducer(state, addLocation(loc3)); // ignorowane
       state = runReducer(state, resumeRun());
       state = runReducer(state, addLocation(loc4));
 
       const distance = selectDistance({ run: state });
 
-      // tylko z aktywnych punktów [loc1, loc2, loc4]
+      // segment 1: [loc1, loc2], segment 2: [loc4] — jeden punkt, dystans = 0
       const expectedDistance = selectDistance({
         run: {
-          locations: [
-            { ...loc1, paused: false },
-            { ...loc2, paused: false },
-            { ...loc4, paused: false },
+          segments: [
+            [{ latitude: loc1.latitude, longitude: loc1.longitude },
+            { latitude: loc2.latitude, longitude: loc2.longitude }],
+            [{ latitude: loc4.latitude, longitude: loc4.longitude }],
           ],
         },
       });
@@ -171,16 +174,14 @@ describe("runSlice", () => {
     });
 
     it("should return 0 distance if all locations were added during pause", () => {
-      const state = {
-        run: {
-          locations: [
-            { ...loc1, paused: true },
-            { ...loc2, paused: true },
-            { ...loc3, paused: true },
-          ],
-        },
-      };
-      expect(selectDistance(state)).toBe(0);
+      let state = runReducer(undefined, startRun());
+      state = runReducer(state, pauseRun());
+      state = runReducer(state, addLocation(loc1));
+      state = runReducer(state, addLocation(loc2));
+      state = runReducer(state, addLocation(loc3));
+
+      expect(selectDistance({ run: state })).toBe(0);
     });
   });
+
 });

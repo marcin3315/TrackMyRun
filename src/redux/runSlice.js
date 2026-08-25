@@ -63,15 +63,10 @@ const runSlice = createSlice({
 
 //selector do obliczania dystansu w czasie rzeczywistym na podstawie lokalizacji
 export const selectDistance = (state) => {
-  const allLocations = state.run.locations;
-
-  // odfiltrowuje punkty tylko z aktywnego biegu (nie zapauzowane)
-  const activeLocations = allLocations.filter((loc) => !loc.paused);
-
-  if (activeLocations.length < 2) return 0;
-
-  // oblicza dystans w km
-  return calculateDistance(activeLocations);
+  return state.run.segments.reduce((total, seg) => {
+    if (seg.length < 2) return total;
+    return total + calculateDistance(seg);
+  }, 0);
 };
 
 export const { startRun, stopRun, addLocation, resetRun, pauseRun, resumeRun } =
