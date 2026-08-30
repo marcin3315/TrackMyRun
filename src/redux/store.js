@@ -7,6 +7,7 @@ const store = configureStore({
     run: runReducer,
     history: historyReducer,
   },
+  
 });
 
 export default store;

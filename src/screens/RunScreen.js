@@ -195,7 +195,7 @@ export default function RunScreen({ navigation }) {
           ) : null
         )}
         {segments[0]?.length > 0 && (
-          <Marker coordinate={segments[0][0]} title="Start" pinColor="red" />
+          <Marker coordinate={segments[0][0]} title="Start" pinColor="green" />
         )}
       </MapView>
 

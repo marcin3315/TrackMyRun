@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TruckMyRun",
-    "slug": "TruckMyRun",
+    "name": "TrackMyRun",
+    "slug": "TrackMyRun",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,11 +14,18 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "TrackMyRun needs your location to track runs in the background.",
+          "isAndroidBackgroundLocationEnabled": true,
+          "isIosBackgroundLocationEnabled": true
+        }
       ]
     ],
     "ios": {
       "supportsTablet": true,
-      "backgroundModes": ["location"],
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "TrackMyRun needs your location to track your runs.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "TrackMyRun needs your location to track runs in the background.",
@@ -32,7 +39,7 @@
       },
       "config": {
         "googleMaps": {
-          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY"
+          "apiKey": "AIzaSyBFpFKoHqDqALifKd7uPIrwz9lcp0p14VU"
         }
       },
       "permissions": [
@@ -40,7 +47,6 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_BACKGROUND_LOCATION"
       ],
-      "edgeToEdgeEnabled": true,
       "package": "com.pokolec.TruckMyRun"
     },
     "web": {

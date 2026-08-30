@@ -1,10 +1,8 @@
 import React from "react";
 import { Text, StyleSheet, TouchableOpacity, ImageBackground } from "react-native";
 import PropTypes from "prop-types";
-import { useFonts, FasterOne_400Regular } from "@expo-google-fonts/faster-one";
 
 export default function HomeScreen({ navigation }) {
-  const [fontsLoaded] = useFonts({ FasterOne_400Regular });
   const handleStartRun = () => {
     navigation.navigate("Run"); // przejście do ekranu biegu
   };
